@@ -1,5 +1,8 @@
 {
-  "name": "Brycee Cheng",
+  "name":{
+        "first": "Brycee",
+        "last": "Cheng"
+    },
   "fromWisconsin": false,
   "numCredits": 10,
   "major": "Industrial & Systems Engineering",
