@@ -46,10 +46,24 @@ function buildStudents(studs) {
 			<p>${stud.name.first} is taking ${stud.numCredits} credits and ${stud.isWisconsin ? "is" : "is NOT"} from Wisconsin.</p>
 			<p>They have ${stud.interests.length} interests including...</p>
 			<ul>
-				${stud.interests.map(interest => `<li>${interest}</li>`).join('')}
+				${stud.interests.map(interest => `<li><button class="interest-btn">${interest}</button></li>`).join('')}
 			</ul>
 		`;
 		container.appendChild(studCard);
+
+		// Add click handlers to all interest buttons in this card
+		studCard.querySelectorAll('.interest-btn').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const interest = btn.innerText;
+				// Clear name and major fields
+				document.getElementById("search-name").value = "";
+				document.getElementById("search-major").value = "";
+				// Set interest field
+				document.getElementById("search-interest").value = interest;
+				// Trigger search
+				handleSearch();
+			});
+		});
 	}
 	console.log(container);
 
@@ -64,7 +78,8 @@ function handleSearch(e) {
 	const interestSearch = document.getElementById("search-interest").value.trim().toLowerCase();
 
 	const results = allStuds.filter (stud => {
-		const nameMatch = nameSearch === "" || stud.name.first.toLowerCase().includes(nameSearch) || stud.name.last.toLowerCase().includes(nameSearch);
+		const fullName = stud.name.first.toLowerCase() + " " + stud.name.last.toLowerCase(); 
+		const nameMatch = nameSearch === "" || stud.name.first.toLowerCase().includes(nameSearch) || stud.name.last.toLowerCase().includes(nameSearch) || fullName.includes(nameSearch);
 		const majorMatch = majorSearch === "" || stud.major.toLowerCase().includes(majorSearch);
 		const interestMatch = interestSearch === "" || stud.interests.some(interest => interest.toLowerCase().includes(interestSearch));
 		return nameMatch && majorMatch && interestMatch;
@@ -75,10 +90,7 @@ function handleSearch(e) {
 
 }
 
-document.getElementById("search-btn").addEventListener("click", (e) => {
-	console.log("Search button clicked");
-	handleSearch(e);
-});
+document.getElementById("search-btn").addEventListener("click", handleSearch);
 // document.getElementById("search-name").addEventListener("input", () => {
 // 	console.log("Name input changed");
 // });
