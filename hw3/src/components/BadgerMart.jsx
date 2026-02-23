@@ -7,6 +7,19 @@ export default function BadgerMart(props) {
 
     useEffect(() => {
         // TODO I should fetch and setFeature here!
+        fetch("https://cs571api.cs.wisc.edu/rest/s26/hw3/featured-item", {
+        headers: {
+            "X-CS571-ID": CS571.getBadgerId()
+        }
+        })
+        .then(res => res.json())
+        .then(data => {
+            setFeature(data);
+            console.log(data);
+        })
+
+        
+
     }, []);
 
     return <div>
