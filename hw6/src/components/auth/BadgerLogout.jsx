@@ -1,7 +1,8 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
+import BadgerLoginStatusContext from '../contexts/BadgerLoginStatusContext';
 
 export default function BadgerLogout() {
+    const [loginStatus, setLoginStatus] = useContext(BadgerLoginStatusContext);
 
     useEffect(() => {
         fetch('https://cs571api.cs.wisc.edu/rest/s26/hw6/logout', {
@@ -12,6 +13,8 @@ export default function BadgerLogout() {
             credentials: "include"
         }).then(res => res.json()).then(json => {
             // Maybe you need to do something here?
+            setLoginStatus(null);
+            sessionStorage.removeItem("loginStatus");
         })
     }, []);
 
