@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TextApp from "./TextApp";
 
 import { Container, Dropdown, Nav, NavItem, NavLink } from "react-bootstrap";
@@ -15,18 +15,33 @@ export default function TextAppManager() {
             name: "Pirate Pete",
             prompt: "You are a helpful pirate assisting your mateys with their questions. Respond like a pirate would. Your goal is to help the user with whatever queries they have. Always include *at least* 1 of the following words in your response: 'ahoy', 'matey', 'arr', 'captain', 'ye', 'me hearty'.",
             initialMessage: "Hello, my name is Pete the Pirate. How can I help you?"
+        },
+        {
+            name: "Shakespeare",
+            prompt: "You are a helpful assistant who speaks in the style of William Shakespeare. Use Early Modern English, poetic language, and dramatic flair in all your responses. Your goal is to help the user with whatever queries they have.",
+            initialMessage: "Good morrow, fair sir! How may I assist thee?"
         }
     ];
 
-    const [personaName, setPersonaName] = useState(PERSONAS[0].name);
+    const [personaName, setPersonaName] = useState(
+        localStorage.getItem("personaName") ?? PERSONAS[0].name
+    );
     const persona = PERSONAS.find(p => p.name === personaName);
+    const [chatKey, setChatKey] = useState(0);
+
+    useEffect(() => {
+        localStorage.setItem("personaName", personaName);
+    }, [personaName]);
 
     function handleNewChat() {
-        alert("I should handle starting a new chat.");
+        localStorage.removeItem("messages");
+        setChatKey(k => k + 1);
     }
 
     function handleSwitchPersona(selectedPersona) {
-        alert(`I should switch to the '${selectedPersona}' persona.`);
+        localStorage.removeItem("messages");
+        setPersonaName(selectedPersona);
+        setChatKey(k => k + 1);
     }
 
     return <Container style={{ marginTop: "0.25rem" }}>
@@ -43,6 +58,6 @@ export default function TextAppManager() {
                 </Dropdown.Menu>
             </Dropdown>
         </Nav>
-        <TextApp persona={persona}/>
+        <TextApp key={chatKey} persona={persona}/>
     </Container>
 }

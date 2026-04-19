@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { BeatLoader } from 'react-spinners';
 
@@ -9,8 +9,9 @@ function TextApp(props) {
 
     // Set to true to block the user from sending another message
     const [isLoading, setIsLoading] = useState(false);
-
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState(
+        JSON.parse(localStorage.getItem("messages")) ?? []
+    );
     const inputRef = useRef();
 
     /**
@@ -18,7 +19,7 @@ function TextApp(props) {
      */
     async function handleWelcome() {
         if (messages.length === 0) {
-            addMessage(Constants.Roles.Assistant, "Welcome!");            
+            addMessage(Constants.Roles.Assistant, props.persona.initialMessage);            
         }
     }
 
@@ -29,14 +30,33 @@ function TextApp(props) {
     async function handleSend(e) {
         e?.preventDefault();
         const input = inputRef.current.value?.trim();
-        setIsLoading(true);
+
+
         if(input) {
+            setIsLoading(true);
             addMessage(Constants.Roles.User, input);
             inputRef.current.value = "";
-            
-            addMessage(Constants.Roles.Assistant, "I should respond to the user...");            
+
+            const newMessages = [
+                { role: Constants.Roles.Developer, content: props.persona.prompt },
+                ...messages,
+                { role: Constants.Roles.User, content: input }
+            ];
+
+            const response = await fetch("https://cs571api.cs.wisc.edu/rest/s26/hw10/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CS571-ID": import.meta.env.VITE_CS571_BADGER_ID
+                },
+                body: JSON.stringify(newMessages)
+            });
+            const data = await response.json();
+
+            addMessage(Constants.Roles.Assistant, data.msg);
+            setIsLoading(false);     
         }
-        setIsLoading(false);
+        
     }
 
     /**
@@ -55,6 +75,10 @@ function TextApp(props) {
     useEffect(() => {
         handleWelcome();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem("messages", JSON.stringify(messages));
+    }, [messages]);
 
     return (
         <div className="app">
