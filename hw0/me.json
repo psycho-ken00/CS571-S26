@@ -1,0 +1,10 @@
+{
+  "name":{
+        "first": "Brycee",
+        "last": "Cheng"
+    },
+  "fromWisconsin": false,
+  "numCredits": 10,
+  "major": "Industrial & Systems Engineering",
+  "interests": ["reading", "badminton", "traveling"]
+}
