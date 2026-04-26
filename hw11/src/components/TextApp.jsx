@@ -21,7 +21,7 @@ import LoginModal from './modals/LoginModal';
 import RegisterModal from './modals/RegisterModal';
 import LogoutModal from './modals/LogoutModal';
 import ConfirmModal from './modals/ConfirmModal';
-import { getToolDefs } from '../tools/_tools';
+import { getToolDefs, callTool } from '../tools/_tools';
 import Constants from '../constants/Constants';
 
 const DEV_PROMPT = `You are Bucky, a friendly and helpful assistant for BadgerChat — a chat community for UW-Madison students. You can help people browse chatrooms, read recent posts, and write new posts on their behalf.
@@ -177,12 +177,68 @@ function TextApp() {
         if (!input) return;
 
         setIsLoading(true);
-        addMessage({ role: Constants.Roles.User, content: input });
-        addMessage({ role: Constants.Roles.Assistant, content: "I should reply to that!" });
-
+        const userMsg = { role: Constants.Roles.User, content: input };
         inputRef.current.value = "";
 
-        setIsLoading(false);
+        // Use functional update to read the latest messages before sending
+        setMessages(prev => {
+            const updated = [...prev, userMsg];
+
+            (async () => {
+                try {
+                    let currentMessages = updated;
+
+                    for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+                        const resp = await fetch("https://cs571api.cs.wisc.edu/rest/s26/hw11/ai/responses", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CS571-ID": import.meta.env.VITE_CS571_BADGER_ID
+                            },
+                            body: JSON.stringify({ messages: currentMessages, tools })
+                        });
+                        const data = await resp.json();
+
+                        if (data.msg) {
+                            // AI returned a final reply
+                            const assistantMsg = { role: Constants.Roles.Assistant, content: data.msg };
+                            currentMessages = [...currentMessages, assistantMsg];
+                            setMessages(currentMessages);
+                            break;
+                        }
+
+                        if (data.tool_calls) {
+                            for (const tc of data.tool_calls) {
+                                const functionCallMsg = {
+                                    type: "function_call",
+                                    call_id: tc.call_id,
+                                    name: tc.name,
+                                    arguments: tc.arguments
+                                };
+                                const output = await callTool(tc.name, tc.arguments, confirmPost);
+                                const functionOutputMsg = {
+                                    type: "function_call_output",
+                                    call_id: tc.call_id,
+                                    output: JSON.stringify(output)
+                                };
+                                currentMessages = [...currentMessages, functionCallMsg, functionOutputMsg];
+                            }
+                            setMessages(currentMessages);
+                        }
+                    }
+                } catch (error) {
+                    console.error(err);
+                    setMessages(prev => [...prev, {
+                        role: Constants.Roles.Assistant,
+                        content: "Sorry, something went wrong. Please try again."
+                    }]);
+                } finally {
+                    setIsLoading(false);
+                }                
+            })();
+
+            return updated; // Show the user message immediately
+        });
     }
 
     useEffect(() => {
